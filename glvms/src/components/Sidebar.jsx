@@ -1,12 +1,13 @@
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, BookOpen, ClipboardCheck, FileBarChart, DollarSign } from 'lucide-react';
+import { LayoutDashboard, Users, BookOpen, ClipboardCheck, FileBarChart, DollarSign, MessageSquare } from 'lucide-react';
 
 const Sidebar = ({ isOpen, onClose, isAdmin = true }) => {
   const adminLinks = [
     { to: '/admin-dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/admin/expenses', icon: DollarSign, label: 'Expenses' },
     { to: '/admin-reports', icon: FileBarChart, label: 'Reports' },
+    { to: '/admin-feedback', icon: MessageSquare, label: 'Feedback' },
   ];
 
   const visitorLinks = [

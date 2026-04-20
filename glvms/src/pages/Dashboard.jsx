@@ -68,7 +68,9 @@ const Dashboard = () => {
       setLoading(true);
       if (activeTab === 'visitors') {
         const response = await api.get('/visitors');
-        setVisitors(response.data);
+        // Only show pending requests in the dashboard
+        const pendingVisitors = response.data.filter(v => v.status === 'pending');
+        setVisitors(pendingVisitors);
       } else if (activeTab === 'lectures') {
         const response = await api.get('/lectures');
         setLectures(response.data);
@@ -516,12 +518,7 @@ const Dashboard = () => {
                 icon={<ClipboardList size={16} />}
                 label="Checklist"
               />
-              <TabButton
-                active={activeTab === 'stats'}
-                onClick={() => setActiveTab('stats')}
-                icon={<BarChart3 size={16} />}
-                label="Analytics"
-              />
+
             </div>
           </div>
 
@@ -540,7 +537,7 @@ const Dashboard = () => {
         </div>
 
         {/* Tab Content: Analytics */}
-        {activeTab === 'stats' && stats && (
+        {false && stats && (
           <div className="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               <StatSummaryCard title="Total Protocol" value={stats.summary.total} icon={<Activity />} color="primary" />
@@ -766,10 +763,10 @@ const Dashboard = () => {
                                   e.stopPropagation();
                                   setEditingVisitor(visitor);
                                 }}
-                                className="h-10 w-10 bg-gray-50 flex items-center justify-center text-secondary rounded-xl hover:bg-primary/10 hover:text-primary transition-all border border-transparent hover:border-primary/10"
+                                className="h-10 px-4 flex items-center gap-2 bg-gray-50 text-secondary rounded-lg hover:bg-primary/10 hover:text-primary transition-all border border-transparent font-black uppercase text-[10px] tracking-widest"
                                 title="Modify Request"
                               >
-                                <Edit size={18} />
+                                <Edit size={14} /> Edit
                               </button>
 
                               <button
@@ -777,42 +774,36 @@ const Dashboard = () => {
                                   e.stopPropagation();
                                   setViewingVisitor(visitor);
                                 }}
-                                className="h-10 px-4 bg-gray-50 text-secondary rounded-xl hover:bg-primary/10 hover:text-primary transition-all border border-transparent hover:border-primary/10 font-black uppercase text-[10px] tracking-widest"
+                                className="h-10 px-4 bg-gray-50 text-secondary rounded-lg hover:bg-primary/10 hover:text-primary transition-all border border-transparent font-black uppercase text-[10px] tracking-widest"
                                 title="View Full Details"
                               >
                                 View
                               </button>
 
-                              {visitor.status === 'pending' ? (
-                                <div className="flex gap-2 animate-in slide-in-from-right-4">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleVisitorStatus(visitor.id, 'approved');
-                                    }}
-                                    className="h-10 px-4 bg-success text-white hover:bg-emerald-600 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm font-black uppercase text-[10px] tracking-widest"
-                                    title="Authorize"
-                                  >
-                                    <CheckCircle size={14} />
-                                    Approve
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleVisitorStatus(visitor.id, 'rejected');
-                                    }}
-                                    className="h-10 px-4 bg-danger text-white hover:bg-rose-700 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm font-black uppercase text-[10px] tracking-widest"
-                                    title="Decline"
-                                  >
-                                    <XCircle size={14} />
-                                    Reject
-                                  </button>
-                                </div>
-                              ) : (
-                                <span className="text-[10px] font-black uppercase tracking-widest text-gray-300 px-2">
-                                  No Pending Action
-                                </span>
-                              )}
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleVisitorStatus(visitor.id, 'approved');
+                                  }}
+                                  className="h-10 px-4 bg-success text-white hover:bg-emerald-600 rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm font-black uppercase text-[10px] tracking-widest"
+                                  title="Authorize"
+                                >
+                                  <CheckCircle size={14} />
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleVisitorStatus(visitor.id, 'rejected');
+                                  }}
+                                  className="h-10 px-4 bg-danger text-white hover:bg-rose-700 rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm font-black uppercase text-[10px] tracking-widest"
+                                  title="Decline"
+                                >
+                                  <XCircle size={14} />
+                                  Reject
+                                </button>
+                              </div>
                             </div>
                           </td>
                         </tr>
@@ -1029,13 +1020,22 @@ const Dashboard = () => {
                         <p className="text-[10px] font-black text-secondary uppercase tracking-widest flex items-center gap-3">
                           <User size={14} className="text-primary" /> {lecture.speakerName}
                         </p>
-                        <button 
-                          className="h-10 w-10 bg-white border border-gray-100 rounded-xl flex items-center justify-center text-primary shadow-soft hover:bg-primary hover:text-white transition-all duration-500"
-                          onClick={() => notifyAssignee(lecture)}
-                          title="WhatsApp Notify"
-                        >
-                          <MessageSquare size={16} />
-                        </button>
+                        <div className="flex items-center gap-3">
+                          <button 
+                            className="h-10 w-10 bg-white border border-gray-100 rounded-xl flex items-center justify-center text-danger shadow-soft hover:bg-danger hover:text-white transition-all duration-500"
+                            onClick={(e) => { e.stopPropagation(); handleDeleteLecture(lecture.id); }}
+                            title="Mark Checklist Done / Delete"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                          <button 
+                            className="h-10 w-10 bg-white border border-gray-100 rounded-xl flex items-center justify-center text-primary shadow-soft hover:bg-primary hover:text-white transition-all duration-500"
+                            onClick={(e) => { e.stopPropagation(); notifyAssignee(lecture); }}
+                            title="WhatsApp Notify"
+                          >
+                            <MessageSquare size={16} />
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -1089,7 +1089,7 @@ const Dashboard = () => {
                       </div>
 
                       <div className="mt-auto pt-8 border-t border-gray-50">
-                        <AddItemInput onAdd={(name) => addItem(lecture.id, name)} />
+                        <AddItemInput onAdd={(name) => addItem(lecture.id, name)} existingItems={lectureItems[lecture.id] || []} />
                       </div>
                     </div>
                   </Card>
@@ -1399,35 +1399,71 @@ const DetailItem = ({ label, value, full = false }) => (
   </div>
 );
 
-const AddItemInput = ({ onAdd }) => {
+const PREDEFINED_ITEMS = [ "Projector Setup", "Microphone Check", "Speaker Confirmation", "Presentation Ready", "Guest Welcome Kit", "Attendance Sheet", "Certificate Preparation", "Refreshments Arranged", "Hall Cleanliness", "Seating Arrangement", "Banner/Poster Setup", "Technical Support Ready", "Recording Setup", "Internet Connection Check", "Backup Power Check" ];
+
+const AddItemInput = ({ onAdd, existingItems = [] }) => {
   const [val, setVal] = useState('');
+  
+  const existingNames = existingItems && Array.isArray(existingItems) ? existingItems.map(i => i.item_name?.toLowerCase()) : [];
+
   const handleAdd = () => {
     if (val.trim()) {
       onAdd(val);
       setVal('');
     }
   };
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="relative group">
-         <input
-            type="text"
-            value={val}
-            onChange={(e) => setVal(e.target.value)}
-            placeholder="Add institutional requirement..."
-            className="w-full bg-gray-50 border-2 border-gray-100 focus:border-primary/20 focus:bg-white rounded-2xl px-6 h-14 text-sm font-bold outline-none transition-all placeholder:text-gray-300 shadow-inner"
-         />
-         <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-30">
-            <ShieldCheck size={14} />
-            <span className="text-[8px] font-black uppercase tracking-widest">Protocol</span>
-         </div>
+    <div className="flex flex-col gap-8">
+      <div className="space-y-4">
+        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Standard Protocols</p>
+        <div className="flex flex-wrap gap-2">
+          {PREDEFINED_ITEMS.map((item) => {
+             const isSelected = existingNames.includes(item.toLowerCase());
+             return (
+               <button
+                 key={item}
+                 type="button"
+                 onClick={() => { if(!isSelected) onAdd(item); }}
+                 disabled={isSelected}
+                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border flex items-center gap-2 ${
+                   isSelected 
+                   ? 'bg-success/5 text-success border-success/20 opacity-60 cursor-not-allowed' 
+                   : 'bg-white border-gray-200 text-secondary hover:border-primary/40 hover:text-primary shadow-sm active:scale-95'
+                 }`}
+               >
+                 {isSelected ? <CheckSquare size={14} /> : <div className="h-3 w-3 border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/10 rounded-sm"></div>}
+                 {item}
+               </button>
+             );
+          })}
+        </div>
       </div>
-      <Button
-        onClick={handleAdd}
-        className="w-full h-14 text-[10px] font-black uppercase tracking-widest rounded-2xl"
-      >
-        <Plus size={18} className="mr-3" /> Execute Addition
-      </Button>
+
+      <div className="space-y-4">
+        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Custom Requirement</p>
+        <div className="flex flex-col gap-4">
+          <div className="relative group">
+             <input
+                type="text"
+                value={val}
+                onChange={(e) => setVal(e.target.value)}
+                placeholder="Add institutional requirement..."
+                className="w-full bg-gray-50 border-2 border-gray-100 focus:border-primary/20 focus:bg-white rounded-2xl px-6 h-14 text-sm font-bold outline-none transition-all placeholder:text-gray-300 shadow-inner"
+             />
+             <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-30">
+                <ShieldCheck size={14} />
+                <span className="text-[8px] font-black uppercase tracking-widest">Protocol</span>
+             </div>
+          </div>
+          <Button
+            onClick={handleAdd}
+            className="w-full h-14 text-[10px] font-black uppercase tracking-widest rounded-2xl"
+          >
+            <Plus size={18} className="mr-3" /> Execute Addition
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };

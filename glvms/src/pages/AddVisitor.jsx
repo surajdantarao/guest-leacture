@@ -105,7 +105,7 @@ const AddVisitor = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-32 pb-20 px-6 relative overflow-hidden">
+    <div className="min-h-screen pt-32 pb-20 px-6 relative text-white" style={{backgroundImage: "linear-gradient(to bottom, rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.9)), url('/assets/University.jpg')", backgroundSize: 'cover', backgroundAttachment: 'fixed'}}>
       {/* Background Decoration */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         <div className="absolute top-40 -left-20 w-96 h-96 bg-primary/5 rounded-full blur-[100px] animate-blob"></div>
@@ -124,15 +124,15 @@ const AddVisitor = () => {
                 <ChevronLeft size={14} />
                 <span>Return to Gateway</span>
               </button>
-              <h1 className="text-5xl md:text-7xl font-black text-dark tracking-tighter leading-none">
-                Visitor <br/><span className="text-primary italic">Protocol</span>
+              <h1 className="text-5xl md:text-7xl font-black text-white drop-shadow-md tracking-tighter leading-none">
+                Visitor Registration
               </h1>
-              <p className="text-xl text-secondary font-medium max-w-md">
+              <p className="hidden">
                 Formalize your visit to the university through our digital entry system.
               </p>
             </div>
             
-            <div className="flex items-center gap-4 bg-white/50 backdrop-blur-md px-6 py-4 rounded-3xl border border-gray-100 shadow-soft">
+            <div className="hidden">
               <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-sm border border-primary/5">
                 <ShieldCheck size={24} />
               </div>

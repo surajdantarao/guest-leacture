@@ -15,6 +15,7 @@ import AssigneeView from './pages/AssigneeView';
 import AddLecture from './pages/AddLecture';
 import VisitorDashboard from './pages/VisitorDashboard';
 import QrScanner from './pages/QrScanner';
+import LectureFeedback from './pages/LectureFeedback';
 
 import Signup from './pages/Signup';
 
@@ -71,6 +72,9 @@ function App() {
             } />
             <Route path="/admin/expenses" element={
               user?.role === 'admin' ? <Expenses /> : <Navigate to="/login" />
+            } />
+            <Route path="/admin-feedback" element={
+              user?.role === 'admin' ? <LectureFeedback /> : <Navigate to="/login" />
             } />
 
             {/* Security Routes */}

@@ -7,7 +7,8 @@ const submitFeedback = async (req, res) => {
   const schema = Joi.object({
     lecture_id: Joi.number().required(),
     rating: Joi.number().min(1).max(5).required(),
-    comment: Joi.string().allow('', null)
+    comment: Joi.string().allow('', null),
+    guest_name: Joi.string().allow('', null)
   });
 
   const { error } = schema.validate(req.body);
@@ -16,7 +17,8 @@ const submitFeedback = async (req, res) => {
   try {
     const feedback = await Feedback.create({
       lecture_id: req.body.lecture_id,
-      user_id: req.userId,
+      user_id: req.userId || null,
+      guest_name: req.body.guest_name || null,
       rating: req.body.rating,
       comment: req.body.comment
     });

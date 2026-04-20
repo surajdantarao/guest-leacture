@@ -111,6 +111,10 @@ const getAllLectures = async (req, res) => {
         {
           model: db.LectureExpense,
           as: 'LectureExpenses'
+        },
+        {
+          model: db.LectureChecklist,
+          as: 'LectureChecklists'
         }
       ]
     });
@@ -120,16 +124,18 @@ const getAllLectures = async (req, res) => {
       // Use associations from the instance or the JSON object
       const feedbacks = l.Feedbacks || lectureJson.Feedbacks || [];
       const expenses = l.LectureExpenses || lectureJson.LectureExpenses || [];
+      const checklists = l.LectureChecklists || lectureJson.LectureChecklists || [];
       
       return {
         ...lectureJson,
         votes: feedbacks.filter(f => f.rating === 5).length,
         totalExpenses: expenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0),
         expenses: expenses,
+        checklists: checklists,
         feedbacks: feedbacks.map(f => ({
           text: f.comment,
           date: f.created_at || f.createdAt,
-          userName: f.User ? f.User.name : (f.user ? f.user.name : 'Anonymous')
+          userName: f.guest_name || (f.User ? f.User.name : (f.user ? f.user.name : 'Anonymous'))
         }))
       };
     });

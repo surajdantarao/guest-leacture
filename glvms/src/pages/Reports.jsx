@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../components/Card';
 import Button from '../components/Button';
-import { Download, Calendar as CalendarIcon, FileText, Users, BookOpen } from 'lucide-react';
+import { Download, Calendar as CalendarIcon, FileText, Users, BookOpen, ChevronDown, ChevronUp, Receipt, CheckSquare } from 'lucide-react';
 import api from '../utils/api';
 
 const Reports = () => {
@@ -11,6 +11,8 @@ const Reports = () => {
   const [loading, setLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [reportType, setReportType] = useState('visitors'); // 'visitors' or 'lectures'
+  const [expandedLectureId, setExpandedLectureId] = useState(null);
+  const [expandedVisitorId, setExpandedVisitorId] = useState(null);
 
   const fetchData = async () => {
     try {
@@ -99,16 +101,20 @@ const Reports = () => {
       const fileDateToken = dateFilter || generatedDate;
 
       if (reportType === 'visitors') {
-        const headers = ['Visitor Name', 'Phone', 'Purpose', 'Host', 'Status', 'Check In', 'Check Out', 'Visit Date'];
+        const headers = ['Visitor Name', 'Phone', 'Category', 'Dept', 'Purpose', 'Host', 'Status', 'Check In', 'Check Out', 'Visit Date', 'Student Name', 'Student Roll'];
         const mapVisitorRow = (v) => ([
           v.name || 'N/A',
           v.phone || 'N/A',
+          v.visitorCategory || v.visitor_category || 'N/A',
+          v.department || 'N/A',
           v.purpose || 'N/A',
           v.personToMeet || v.person_to_meet || 'N/A',
           v.status || 'N/A',
           v.checkIn || 'Pending',
           v.checkOut || 'Pending',
-          v.visitDate || v.visit_date || 'N/A'
+          v.visitDate || v.visit_date || 'N/A',
+          v.studentName || v.student_name || 'N/A',
+          v.studentRoll || v.student_roll || 'N/A'
         ]);
 
         if (!filteredVisitors.length) {
@@ -136,11 +142,37 @@ const Reports = () => {
           l.venue || 'N/A',
           l.lecture_date || (l.dateTime ? new Date(l.dateTime).toISOString().split('T')[0] : 'N/A'),
           l.lecture_time || (l.dateTime ? new Date(l.dateTime).toTimeString().slice(0, 8) : 'N/A'),
-          l.deleted_at || l.deletedAt ? 'archived' : (l.status || 'scheduled'),
+          l.deleted_at || l.deletedAt ? 'archived' : (l.status || 'completed'),
           Number.parseFloat(l.totalExpenses || 0).toFixed(2)
         ]));
 
         workbookSheets.push(buildWorksheetXml('Lecture_History', headers, lectureRows));
+
+        const expenseHeaders = ['Lecture Topic', 'Expense Description', 'Amount (INR)'];
+        const expenseRows = [];
+        filteredLectures.forEach(l => {
+          if (l.expenses && l.expenses.length > 0) {
+            l.expenses.forEach(e => {
+              expenseRows.push([l.topic, e.description, e.amount.toString()]);
+            });
+          }
+        });
+        if (expenseRows.length > 0) {
+          workbookSheets.push(buildWorksheetXml('Detailed_Expenses', expenseHeaders, expenseRows));
+        }
+
+        const checklistHeaders = ['Lecture Topic', 'Task/Item', 'Status'];
+        const checklistRows = [];
+        filteredLectures.forEach(l => {
+          if (l.checklists && l.checklists.length > 0) {
+            l.checklists.forEach(c => {
+              checklistRows.push([l.topic, c.item_name, c.status]);
+            });
+          }
+        });
+        if (checklistRows.length > 0) {
+          workbookSheets.push(buildWorksheetXml('Lecture_Checklists', checklistHeaders, checklistRows));
+        }
       }
 
       const workbookXml =
@@ -170,43 +202,90 @@ const Reports = () => {
     }
   };
 
+  const toggleExpandLecture = (id) => {
+    setExpandedLectureId(expandedLectureId === id ? null : id);
+  };
+
+  const toggleExpandVisitor = (id) => {
+    setExpandedVisitorId(expandedVisitorId === id ? null : id);
+  };
+
   const VisitorRows = ({ rows, emptyText }) => (
     rows.length > 0 ? rows.map((v) => (
-      <tr key={v.id} className="hover:bg-primary/[0.02] transition-colors group">
-        <td className="px-8 py-6">
-          <div className="flex flex-col">
-            <span className="font-black text-dark text-sm">{v.name}</span>
-            <span className="text-[10px] font-bold text-gray-400 tracking-tight">{v.phone}</span>
-          </div>
-        </td>
-        <td className="px-8 py-6">
-          <div className="flex flex-col">
-            <span className="font-bold text-dark text-xs">{v.purpose}</span>
-            <span className="text-[10px] font-black text-primary uppercase tracking-wider mt-1">{v.personToMeet}</span>
-          </div>
-        </td>
-        <td className="px-8 py-6">
-          <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-            v.status === 'approved' ? 'bg-success/5 text-success border-success/20' :
-            v.status === 'rejected' ? 'bg-danger/5 text-danger border-danger/20' :
-            'bg-warning/5 text-warning border-warning/20'
-          }`}>
-            {v.status}
-          </span>
-        </td>
-        <td className="px-8 py-6">
-          <div className="flex items-center gap-3 font-mono text-[10px] font-black">
-            <span className={v.checkIn ? 'text-success' : 'text-gray-300'}>{v.checkIn || '--:--'}</span>
-            <span className="text-gray-200">|</span>
-            <span className={v.checkOut ? 'text-primary' : 'text-gray-300'}>{v.checkOut || '--:--'}</span>
-          </div>
-        </td>
-        <td className="px-8 py-6 text-right">
-          <span className="text-[10px] font-black text-dark bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
-            {v.visitDate || v.visit_date}
-          </span>
-        </td>
-      </tr>
+      <React.Fragment key={v.id}>
+        <tr 
+          className={`hover:bg-primary/[0.02] transition-colors group cursor-pointer ${expandedVisitorId === v.id ? 'bg-primary/[0.03]' : ''}`}
+          onClick={() => toggleExpandVisitor(v.id)}
+        >
+          <td className="px-8 py-6">
+            <div className="flex flex-col">
+              <span className="font-black text-dark text-sm">{v.name}</span>
+              <span className="text-[10px] font-bold text-gray-400 tracking-tight">{v.phone}</span>
+            </div>
+          </td>
+          <td className="px-8 py-6">
+            <div className="flex flex-col">
+              <span className="font-bold text-dark text-xs">{v.purpose}</span>
+              <span className="text-[10px] font-black text-primary uppercase tracking-wider mt-1">{v.personToMeet || v.person_to_meet}</span>
+            </div>
+          </td>
+          <td className="px-8 py-6">
+            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+              v.status === 'approved' ? 'bg-success/5 text-success border-success/20' :
+              v.status === 'rejected' ? 'bg-danger/5 text-danger border-danger/20' :
+              'bg-warning/5 text-warning border-warning/20'
+            }`}>
+              {v.status}
+            </span>
+          </td>
+          <td className="px-8 py-6">
+            <div className="flex items-center gap-3 font-mono text-[10px] font-black">
+              <span className={v.checkIn ? 'text-success' : 'text-gray-300'}>{v.checkIn || '--:--'}</span>
+              <span className="text-gray-200">|</span>
+              <span className={v.checkOut ? 'text-primary' : 'text-gray-300'}>{v.checkOut || '--:--'}</span>
+            </div>
+          </td>
+          <td className="px-8 py-6 text-right">
+            <div className="flex items-center justify-end gap-4">
+              <span className="text-[10px] font-black text-dark bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
+                {v.visitDate || v.visit_date}
+              </span>
+              {expandedVisitorId === v.id ? <ChevronUp size={14} className="text-primary" /> : <ChevronDown size={14} className="text-gray-300" />}
+            </div>
+          </td>
+        </tr>
+        {expandedVisitorId === v.id && (
+          <tr>
+            <td colSpan="5" className="px-8 py-6 bg-gray-50/50 border-y border-gray-100">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Context</p>
+                   <div className="space-y-1">
+                      <p className="text-xs font-bold text-dark"><span className="text-gray-400 font-medium">Category:</span> {v.visitorCategory || v.visitor_category || 'Guest'}</p>
+                      <p className="text-xs font-bold text-dark"><span className="text-gray-400 font-medium">Department:</span> {v.department || 'N/A'}</p>
+                   </div>
+                </div>
+                <div>
+                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Student</p>
+                   <div className="space-y-1">
+                      <p className="text-xs font-bold text-dark"><span className="text-gray-400 font-medium">Name:</span> {v.studentName || v.student_name || 'N/A'}</p>
+                      <p className="text-xs font-bold text-dark"><span className="text-gray-400 font-medium">Roll:</span> {v.studentRoll || v.student_roll || 'N/A'}</p>
+                   </div>
+                </div>
+                <div>
+                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Contact</p>
+                   <div className="space-y-1">
+                      <p className="text-xs font-bold text-dark truncate"><span className="text-gray-400 font-medium">Email:</span> {v.email || 'N/A'}</p>
+                      {v.idProof && (
+                        <a href={v.idProof.startsWith('http') ? v.idProof : `${api.defaults.baseURL.replace('/api', '')}${v.idProof}`} target="_blank" rel="noreferrer" className="text-[10px] font-black text-primary uppercase underline hover:text-dark">ID Proof</a>
+                      )}
+                   </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        )}
+      </React.Fragment>
     )) : (
       <tr>
         <td colSpan="5" className="px-8 py-10 text-center">
@@ -219,7 +298,6 @@ const Reports = () => {
   return (
     <div className="min-h-screen bg-background pt-24 pb-12 px-4">
       <div className="container-max space-y-8">
-        {/* Header Section */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8 pb-8 border-b border-gray-100">
           <div className="space-y-2">
             <div className="inline-flex items-center px-3 py-1 bg-primary/10 rounded-full text-primary font-bold text-[10px] uppercase tracking-widest border border-primary/10">
@@ -252,8 +330,7 @@ const Reports = () => {
           </div>
         </div>
 
-        {/* Tab Selection */}
-        <div className="flex bg-gray-100/50 p-1.5 rounded-2xl w-full max-w-md shadow-inner">
+        <div className="flex bg-gray-100/50 p-1.5 rounded-2xl w-full max-w-md shadow-inner border border-gray-200/50">
           <button
             onClick={() => setReportType('visitors')}
             className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all ${
@@ -274,8 +351,7 @@ const Reports = () => {
           </button>
         </div>
 
-        {/* Table Content */}
-        <Card noPadding className="overflow-hidden border-none shadow-card bg-white">
+        <Card noPadding className="overflow-hidden border-none shadow-card bg-white rounded-[2rem]">
           <div className="overflow-x-auto">
             {reportType === 'visitors' ? (
               <div className="space-y-8 p-6">
@@ -289,8 +365,9 @@ const Reports = () => {
                 ) : filteredVisitors.length > 0 ? (
                   <>
                     <div className="rounded-2xl border border-success/20 overflow-hidden">
-                      <div className="px-6 py-4 bg-success/5 border-b border-success/10">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-success">Inside Campus (Entered, Not Exited)</p>
+                      <div className="px-6 py-4 bg-success/5 border-b border-success/10 flex items-center justify-between">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-success">Inside Campus</p>
+                        <span className="text-[10px] font-black text-success/60 bg-white/50 px-2 py-0.5 rounded-lg border border-success/10">{insideVisitors.length} Active</span>
                       </div>
                       <table className="w-full text-left border-collapse">
                         <thead>
@@ -309,8 +386,9 @@ const Reports = () => {
                     </div>
 
                     <div className="rounded-2xl border border-primary/20 overflow-hidden">
-                      <div className="px-6 py-4 bg-primary/5 border-b border-primary/10">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Exited Visitors</p>
+                      <div className="px-6 py-4 bg-primary/5 border-b border-primary/10 flex items-center justify-between">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Archived Access Logs</p>
+                        <span className="text-[10px] font-black text-primary/60 bg-white/50 px-2 py-0.5 rounded-lg border border-primary/10">{exitedVisitors.length} Records</span>
                       </div>
                       <table className="w-full text-left border-collapse">
                         <thead>
@@ -329,8 +407,9 @@ const Reports = () => {
                     </div>
 
                     <div className="rounded-2xl border border-warning/20 overflow-hidden">
-                      <div className="px-6 py-4 bg-warning/5 border-b border-warning/10">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-warning">No Entry Logged Yet</p>
+                      <div className="px-6 py-4 bg-warning/5 border-b border-warning/10 flex items-center justify-between">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-warning">Pending Entry</p>
+                        <span className="text-[10px] font-black text-warning/60 bg-white/50 px-2 py-0.5 rounded-lg border border-warning/10">{noEntryVisitors.length} Awaiting</span>
                       </div>
                       <table className="w-full text-left border-collapse">
                         <thead>
@@ -371,58 +450,137 @@ const Reports = () => {
                     <th className="px-8 py-6 font-black text-gray-400 text-[10px] uppercase tracking-[0.2em]">Financials</th>
                     <th className="px-8 py-6 font-black text-gray-400 text-[10px] uppercase tracking-[0.2em]">Status</th>
                     <th className="px-8 py-6 font-black text-gray-400 text-[10px] uppercase tracking-[0.2em] text-right">Date</th>
+                    <th className="w-10"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {loading ? (
                     <tr>
-                      <td colSpan="5" className="px-8 py-24 text-center text-gray-400 animate-pulse font-black text-[10px] uppercase tracking-widest">
+                      <td colSpan="6" className="px-8 py-24 text-center text-gray-400 animate-pulse font-black text-[10px] uppercase tracking-widest">
                         Generating Analytics...
                       </td>
                     </tr>
                   ) : filteredLectures.length > 0 ? filteredLectures.map((l) => (
-                    <tr key={l.id} className="hover:bg-primary/[0.02] transition-colors group">
-                      <td className="px-8 py-6">
-                         <span className="font-black text-dark text-sm">{l.topic}</span>
-                      </td>
-                      <td className="px-8 py-6">
-                        <div className="flex flex-col">
-                          <span className="font-bold text-dark text-xs">{l.speakerName}</span>
-                          <span className="text-[10px] font-black text-primary uppercase tracking-wider mt-1">{l.venue}</span>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6">
-                         <div className="flex items-baseline gap-1">
-                            <span className="text-[10px] font-black text-primary">INR</span>
-                            <span className="font-black text-dark text-sm">
-                              {parseFloat(l.totalExpenses || 0).toLocaleString('en-IN')}
+                    <React.Fragment key={l.id}>
+                      <tr 
+                        className={`hover:bg-primary/[0.02] transition-colors group cursor-pointer ${expandedLectureId === l.id ? 'bg-primary/[0.03]' : ''}`}
+                        onClick={() => toggleExpandLecture(l.id)}
+                      >
+                        <td className="px-8 py-6">
+                           <span className="font-black text-dark text-sm leading-tight block max-w-xs">{l.topic}</span>
+                        </td>
+                        <td className="px-8 py-6">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-dark text-xs">{l.speakerName || l.speaker_name}</span>
+                            <span className="text-[10px] font-black text-primary uppercase tracking-wider mt-1">{l.venue}</span>
+                          </div>
+                        </td>
+                        <td className="px-8 py-6">
+                           <div className="flex items-baseline gap-1">
+                              <span className="text-[10px] font-black text-primary">INR</span>
+                              <span className="font-black text-dark text-sm">
+                                {parseFloat(l.totalExpenses || 0).toLocaleString('en-IN')}
+                              </span>
+                           </div>
+                        </td>
+                        <td className="px-8 py-6">
+                          {l.deleted_at || l.deletedAt ? (
+                            <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-danger/5 text-danger border border-danger/20">
+                              Archived
                             </span>
-                         </div>
-                      </td>
-                      <td className="px-8 py-6">
-                        {l.deleted_at || l.deletedAt ? (
-                          <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-danger/5 text-danger border border-danger/20">
-                            Archived
+                          ) : (
+                            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+                              l.status === 'completed' ? 'bg-success/5 text-success border-success/20' :
+                              l.status === 'cancelled' ? 'bg-danger/5 text-danger border-danger/20' :
+                              'bg-primary/5 text-primary border-primary/20'
+                            }`}>
+                              {l.status}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-8 py-6 text-right">
+                          <span className="text-[10px] font-black text-dark bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
+                            {l.lecture_date || (l.dateTime ? new Date(l.dateTime).toISOString().split('T')[0] : 'N/A')}
                           </span>
-                        ) : (
-                          <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                            l.status === 'completed' ? 'bg-success/5 text-success border-success/20' :
-                            l.status === 'cancelled' ? 'bg-danger/5 text-danger border-danger/20' :
-                            'bg-primary/5 text-primary border-primary/20'
-                          }`}>
-                            {l.status}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-8 py-6 text-right">
-                        <span className="text-[10px] font-black text-dark bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
-                          {l.lecture_date || new Date(l.dateTime).toISOString().split('T')[0]}
-                        </span>
-                      </td>
-                    </tr>
+                        </td>
+                        <td className="px-4 py-6">
+                          {expandedLectureId === l.id ? <ChevronUp size={16} className="text-primary" /> : <ChevronDown size={16} className="text-gray-300" />}
+                        </td>
+                      </tr>
+                      {expandedLectureId === l.id && (
+                        <tr>
+                          <td colSpan="6" className="px-8 py-8 bg-gray-50/50 border-y border-gray-100">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                              <div className="space-y-4">
+                                <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                                  <Receipt size={16} className="text-primary" />
+                                  <h4 className="text-[10px] font-black uppercase tracking-widest text-dark">Financials</h4>
+                                </div>
+                                {l.expenses && l.expenses.length > 0 ? (
+                                  <div className="space-y-2">
+                                    {l.expenses.map((exp, idx) => (
+                                      <div key={idx} className="flex justify-between items-center p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                                        <span className="text-xs font-bold text-secondary">{exp.description}</span>
+                                        <span className="text-xs font-black text-dark">₹{parseFloat(exp.amount).toLocaleString('en-IN')}</span>
+                                      </div>
+                                    ))}
+                                    <div className="flex justify-between items-center p-3 bg-primary/5 rounded-xl border border-primary/10 mt-4">
+                                      <span className="text-xs font-black text-primary">Total</span>
+                                      <span className="text-sm font-black text-primary">₹{parseFloat(l.totalExpenses).toLocaleString('en-IN')}</span>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <p className="text-[10px] font-bold text-gray-400 italic">No expense records.</p>
+                                )}
+                              </div>
+
+                              <div className="space-y-4">
+                                <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                                  <CheckSquare size={16} className="text-primary" />
+                                  <h4 className="text-[10px] font-black uppercase tracking-widest text-dark">Checklist</h4>
+                                </div>
+                                {l.checklists && l.checklists.length > 0 ? (
+                                  <div className="space-y-2">
+                                    {l.checklists.map((item, idx) => (
+                                      <div key={idx} className="flex justify-between items-center p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                                        <span className="text-xs font-bold text-secondary">{item.item_name}</span>
+                                        <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tighter ${
+                                          item.status === 'ready' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'
+                                        }`}>
+                                          {item.status}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-[10px] font-bold text-gray-400 italic">No checklist items.</p>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="mt-8 pt-6 border-t border-gray-100">
+                               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                  <div>
+                                     <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Department</p>
+                                     <p className="text-xs font-bold text-dark">{l.department}</p>
+                                  </div>
+                                  <div>
+                                     <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Assignee</p>
+                                     <p className="text-xs font-bold text-dark">{l.assignee_name || 'N/A'}</p>
+                                  </div>
+                                  <div>
+                                     <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Description</p>
+                                     <p className="text-xs font-bold text-dark line-clamp-2">{l.description || 'No description.'}</p>
+                                  </div>
+                               </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   )) : (
                     <tr>
-                      <td colSpan="5" className="px-8 py-32 text-center">
+                      <td colSpan="6" className="px-8 py-32 text-center">
                         <div className="flex flex-col items-center gap-6">
                           <div className="h-20 w-20 bg-gray-50 rounded-[2rem] flex items-center justify-center text-gray-200 shadow-inner">
                             <BookOpen size={40} />

@@ -19,11 +19,15 @@ const Feedback = sequelize.define('Feedback', {
   },
   user_id: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
     references: {
       model: User,
       key: 'id'
     }
+  },
+  guest_name: {
+    type: DataTypes.STRING,
+    allowNull: true
   },
   rating: {
     type: DataTypes.INTEGER,

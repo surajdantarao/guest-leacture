@@ -120,25 +120,36 @@ const VisitorForm = ({ onSubmit, initialData, isLoading }) => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <FormGroup label="Department" icon={<MapPin size={18} />}>
-            <input 
-              className="input-field" 
-              name="department" 
-              placeholder="e.g. Computer Science"
-              value={formData.department} 
-              onChange={handleChange} 
-              required 
-            />
+            <select
+              className="input-field appearance-none w-full"
+              name="department"
+              value={formData.department}
+              onChange={handleChange}
+              required
+            >
+              <option value="" disabled>Select Department</option>
+              <option value="Computer">Computer</option>
+              <option value="IT">IT</option>
+              <option value="Mechanical">Mechanical</option>
+              <option value="Civil">Civil</option>
+              <option value="Electrical">Electrical</option>
+            </select>
           </FormGroup>
 
           <FormGroup label="Contact Person" icon={<User size={18} />}>
-            <input 
-              className="input-field" 
-              name="personToMeet" 
-              placeholder="e.g. Dr. Jane Smith"
-              value={formData.personToMeet} 
-              onChange={handleChange} 
-              required 
-            />
+            <select
+              className="input-field appearance-none w-full"
+              name="personToMeet"
+              value={formData.personToMeet}
+              onChange={handleChange}
+              required
+            >
+              <option value="" disabled>Select Contact Person</option>
+              <option value="Nitekesh Sir">Nitekesh Sir</option>
+              <option value="Shubhangi Mam">Shubhangi Mam</option>
+              <option value="Rajesh Sir">Rajesh Sir</option>
+              <option value="Student">Student</option>
+            </select>
           </FormGroup>
 
           <div className="md:col-span-2">
