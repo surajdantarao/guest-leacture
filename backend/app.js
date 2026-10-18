@@ -28,15 +28,30 @@ app.get('/', (req, res) => {
   res.json({ message: "Welcome to GLVMS API." });
 });
 
-// Routes
+// Routes - supported both with /api and without /api prefixes
 app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes);
+
 app.use('/api/visitors', visitorRoutes);
+app.use('/visitors', visitorRoutes);
+
 app.use('/api/security', securityRoutes);
+app.use('/security', securityRoutes);
+
 app.use('/api/lectures', lectureRoutes);
+app.use('/lectures', lectureRoutes);
+
 app.use('/api/checklist', checklistRoutes);
+app.use('/checklist', checklistRoutes);
+
 app.use('/api/expenses', expenseRoutes);
+app.use('/expenses', expenseRoutes);
+
 app.use('/api/feedback', feedbackRoutes);
+app.use('/feedback', feedbackRoutes);
+
 app.use('/api', vmsRoutes);
+app.use('/', vmsRoutes);
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {

@@ -1,8 +1,15 @@
 import axios from 'axios';
 
+let apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+apiBaseUrl = apiBaseUrl.trim().replace(/\/+$/, '');
+if (!apiBaseUrl.endsWith('/api')) {
+  apiBaseUrl += '/api';
+}
+
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  baseURL: apiBaseUrl,
 });
+
 
 // Add a request interceptor to include the JWT token
 api.interceptors.request.use(
