@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../components/Card';
 import Button from '../components/Button';
-import { MapPin, User, Clock, CalendarDays, BookOpen, ArrowRight, ThumbsUp, MessageSquare, X, Trash2, ShieldCheck, Search, Plus, ChevronDown, ChevronUp } from 'lucide-react';
+import { MapPin, User, Clock, BookOpen, ArrowRight, ThumbsUp, MessageSquare, X, Trash2, ShieldCheck, Search, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import api from '../utils/api';
 import { getUser } from '../utils/localStorage';
 
@@ -64,12 +64,6 @@ const Lectures = () => {
     return dt
       ? dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       : 'Time TBA';
-  };
-
-  const canInteractWithLecture = (lecture) => {
-    const dt = getLectureDateTime(lecture);
-    // Allow voting even before lecture starts
-    return true; 
   };
 
   const handleDelete = async (id) => {
@@ -135,40 +129,38 @@ const Lectures = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20 relative overflow-hidden">
-      {/* Hero Section with University Background */}
-      <div className="relative h-[60vh] min-h-[400px] flex items-center justify-center overflow-hidden">
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000"
-          style={{ 
-            backgroundImage: `url('/assets/University.jpg')`,
-          }}
-        />
-        <div className="absolute inset-0 bg-dark/60 backdrop-blur-[2px]"></div>
+      {/* Header Section */}
+      <div className="relative pt-32 pb-16 flex items-center justify-center overflow-hidden">
+        {/* Background Decoration */}
+        <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+          <div className="absolute top-20 -left-20 w-96 h-96 bg-primary/5 rounded-full blur-[100px] animate-blob"></div>
+          <div className="absolute top-40 -right-20 w-96 h-96 bg-accent/5 rounded-full blur-[100px] animate-blob animation-delay-4000"></div>
+        </div>
         
         <div className="container-max relative z-10 text-center space-y-8 px-6">
-          <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md px-6 py-2.5 rounded-full border border-white/20 shadow-xl animate-fade-in">
+          <div className="inline-flex items-center gap-3 bg-white/50 backdrop-blur-md px-6 py-2.5 rounded-full border border-gray-100 shadow-soft animate-fade-in">
             <span className="flex h-2 w-2 relative">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
             </span>
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white">Knowledge Series 2026</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Knowledge Series 2026</span>
           </div>
           
-          <h1 className="text-5xl md:text-8xl font-black text-white tracking-tighter leading-none animate-slide-up">
+          <h1 className="text-5xl md:text-8xl font-black text-dark tracking-tighter leading-none animate-slide-up">
             Guest <span className="text-primary italic">Lectures</span>
           </h1>
           
-          <p className="text-white/70 text-lg md:text-xl max-w-2xl mx-auto font-medium leading-relaxed animate-slide-up delay-100">
+          <p className="text-secondary text-lg md:text-xl max-w-2xl mx-auto font-medium leading-relaxed animate-slide-up delay-100 opacity-80">
             Bridging academia and industry through curated learning experiences with global thought leaders.
           </p>
 
           <div className="flex flex-col md:flex-row items-center justify-center gap-4 pt-4 animate-slide-up delay-200">
             <div className="relative w-full max-w-md group">
-               <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-primary transition-colors" size={20} />
+               <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" size={20} />
                <input 
                   type="text" 
                   placeholder="Search topic or speaker..."
-                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-white/30 pl-16 h-16 rounded-2xl outline-none focus:border-primary/50 transition-all shadow-2xl"
+                  className="w-full bg-white border border-gray-100 text-dark placeholder:text-gray-400 pl-16 h-16 rounded-2xl outline-none focus:border-primary/50 transition-all shadow-soft focus:shadow-glow"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                />
@@ -177,7 +169,7 @@ const Lectures = () => {
         </div>
       </div>
 
-      <div className="container-max relative z-10 -mt-12 px-6 space-y-12">
+      <div className="container-max relative z-10 px-6 space-y-12">
         {/* Admin Action Bar */}
         {isAdmin && (
           <div className="flex justify-end animate-slide-up delay-300">

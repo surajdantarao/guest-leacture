@@ -105,7 +105,7 @@ const AddVisitor = () => {
   }
 
   return (
-    <div className="min-h-screen pt-32 pb-20 px-6 relative text-white" style={{backgroundImage: "linear-gradient(to bottom, rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.9)), url('/assets/University.jpg')", backgroundSize: 'cover', backgroundAttachment: 'fixed'}}>
+    <div className="min-h-screen pt-32 pb-20 px-6 relative bg-background text-dark">
       {/* Background Decoration */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         <div className="absolute top-40 -left-20 w-96 h-96 bg-primary/5 rounded-full blur-[100px] animate-blob"></div>
@@ -113,34 +113,22 @@ const AddVisitor = () => {
       </div>
 
       <div className="container-max relative z-10">
-        <div className="max-w-4xl mx-auto space-y-12">
+        <div className="max-w-2xl mx-auto space-y-12">
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 animate-slide-up">
-            <div className="space-y-4">
-              <button
-                onClick={() => navigate('/')}
-                className="flex items-center space-x-2 text-primary font-black uppercase text-[10px] tracking-[0.3em] hover:opacity-70 transition-all mb-4"
-              >
-                <ChevronLeft size={14} />
-                <span>Return to Gateway</span>
-              </button>
-              <h1 className="text-5xl md:text-7xl font-black text-white drop-shadow-md tracking-tighter leading-none">
-                Visitor Registration
-              </h1>
-              <p className="hidden">
-                Formalize your visit to the university through our digital entry system.
-              </p>
-            </div>
-            
-            <div className="hidden">
-              <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-sm border border-primary/5">
-                <ShieldCheck size={24} />
-              </div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Security Clearance</p>
-                <p className="text-sm font-bold text-dark">ISO 27001 Protocol</p>
-              </div>
-            </div>
+          <div className="text-center space-y-4 animate-slide-up">
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center space-x-2 text-primary font-black uppercase text-[10px] tracking-[0.3em] hover:opacity-70 transition-all mb-4 mx-auto"
+            >
+              <ChevronLeft size={14} />
+              <span>Return to Gateway</span>
+            </button>
+            <h1 className="text-5xl md:text-6xl font-black text-dark tracking-tighter leading-none">
+              Visitor <span className="text-primary italic">Registration</span>
+            </h1>
+            <p className="text-secondary font-medium">
+              Formalize your visit through our digital entry system.
+            </p>
           </div>
 
           {error && (
@@ -150,15 +138,24 @@ const AddVisitor = () => {
             </div>
           )}
 
-          <Card className="rounded-[3rem] border-none shadow-float overflow-hidden p-0 animate-slide-up animate-stagger-1">
-            <div className="bg-dark p-10 md:p-12 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-[80px] rounded-full -mr-32 -mt-32"></div>
-              <div className="relative z-10">
-                 <h3 className="text-2xl font-black text-white tracking-tight mb-2">Registration Form</h3>
-                 <p className="text-gray-400 font-medium">Please provide accurate institutional or personal details.</p>
+          <Card className="rounded-[3.5rem] border-none shadow-float overflow-hidden p-0 animate-slide-up animate-stagger-1 bg-white">
+            <div className="bg-dark p-12 md:p-16 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[100px] rounded-full -mr-40 -mt-40"></div>
+              <div className="absolute bottom-0 left-0 w-40 h-40 bg-accent/5 blur-[60px] rounded-full -ml-20 -mb-20"></div>
+              
+              <div className="relative z-10 text-center">
+                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full mb-6">
+                    <ShieldCheck size={14} className="text-primary" />
+                    <span className="text-[10px] font-black text-white/60 uppercase tracking-[0.2em]">Institutional Access Control</span>
+                 </div>
+                 <h3 className="text-3xl md:text-4xl font-black text-white tracking-tight mb-3 uppercase">Clearance <span className="text-primary italic">Portal</span></h3>
+                 <p className="text-gray-400 text-xs font-bold uppercase tracking-[0.2em] max-w-xs mx-auto leading-loose">
+                    Authorized Personnel Entry System <br/> 
+                    <span className="text-primary/50 font-black">Ref: SEC-VIS-2026-X</span>
+                 </p>
               </div>
             </div>
-            <div className="p-8 md:p-12 bg-white">
+            <div className="p-10 md:p-16">
               <VisitorForm onSubmit={handleAddVisitor} isLoading={isLoading} initialData={lecturePrefill} />
             </div>
           </Card>

@@ -9,8 +9,8 @@ const QrScanner = () => {
   const [scanResult, setScanResult] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [isScanning, setIsScanning] = useState(true);
-  const [scanMode, setScanMode] = useState('entry');
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanMode, setScanMode] = useState(null); // 'entry' or 'exit'
 
   const onScanSuccess = useCallback(async (decodedText) => {
     try {
@@ -34,29 +34,41 @@ const QrScanner = () => {
 
   useEffect(() => {
     let scanner = null;
-    if (isScanning) {
-      scanner = new Html5QrcodeScanner('reader', {
-        qrbox: {
-          width: 250,
-          height: 250,
-        },
-        fps: 10,
-      });
+    if (isScanning && scanMode) {
+      // Use a small delay to ensure the DOM element 'reader' is present
+      const timer = setTimeout(() => {
+        scanner = new Html5QrcodeScanner('reader', {
+          qrbox: {
+            width: 250,
+            height: 250,
+          },
+          fps: 10,
+        });
 
-      scanner.render(onScanSuccess, onScanError);
+        scanner.render(onScanSuccess, onScanError);
+      }, 100);
+
+      return () => {
+        clearTimeout(timer);
+        if (scanner) {
+          scanner.clear().catch(err => console.error('Failed to clear scanner', err));
+        }
+      };
     }
+  }, [isScanning, scanMode, onScanSuccess, onScanError]);
 
-    return () => {
-      if (scanner) {
-        scanner.clear().catch(err => console.error('Failed to clear scanner', err));
-      }
-    };
-  }, [isScanning, onScanSuccess, onScanError]);
+  const startScanning = (mode) => {
+    setScanMode(mode);
+    setIsScanning(true);
+    setScanResult(null);
+    setError(null);
+  };
 
   const resetScanner = () => {
     setScanResult(null);
     setError(null);
-    setIsScanning(true);
+    setIsScanning(false);
+    setScanMode(null);
   };
 
   const formatDateTime = (value) => {
@@ -93,42 +105,57 @@ const QrScanner = () => {
         </div>
 
         <Card className="p-0 overflow-hidden border-none shadow-float rounded-[3rem] bg-white">
-          {isScanning ? (
-            <div className="p-10 space-y-10">
-              <div className="flex flex-col sm:flex-row gap-3">
+          {!scanMode && !scanResult && !error && !loading ? (
+            <div className="p-12 space-y-10 text-center">
+              <div className="space-y-4">
+                <h3 className="text-2xl font-black text-dark uppercase tracking-tight">Select Operation Mode</h3>
+                <p className="text-secondary font-medium">Choose the type of scan protocol to initiate.</p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <button
-                  onClick={() => setScanMode('entry')}
-                  className={`flex-1 h-12 rounded-xl border font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all ${
-                    scanMode === 'entry'
-                      ? 'bg-success text-white border-success shadow-soft'
-                      : 'bg-white text-secondary border-gray-200 hover:border-success/40'
-                  }`}
+                  onClick={() => startScanning('entry')}
+                  className="group relative h-48 rounded-[2.5rem] bg-success/5 border-2 border-dashed border-success/20 hover:border-success hover:bg-success transition-all duration-500 overflow-hidden"
                 >
-                  <LogIn size={16} /> Scan In
+                  <div className="relative z-10 flex flex-col items-center gap-4 text-success group-hover:text-white transition-colors duration-500">
+                    <LogIn size={48} className="group-hover:scale-110 transition-transform duration-500" />
+                    <span className="font-black uppercase tracking-widest text-sm">Check-In Scan</span>
+                  </div>
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-success/10 rounded-full -mr-16 -mt-16 group-hover:bg-white/10 transition-colors"></div>
                 </button>
                 <button
-                  onClick={() => setScanMode('exit')}
-                  className={`flex-1 h-12 rounded-xl border font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all ${
-                    scanMode === 'exit'
-                      ? 'bg-primary text-white border-primary shadow-soft'
-                      : 'bg-white text-secondary border-gray-200 hover:border-primary/40'
-                  }`}
+                  onClick={() => startScanning('exit')}
+                  className="group relative h-48 rounded-[2.5rem] bg-primary/5 border-2 border-dashed border-primary/20 hover:border-primary hover:bg-primary transition-all duration-500 overflow-hidden"
                 >
-                  <LogOut size={16} /> Scan Out
+                  <div className="relative z-10 flex flex-col items-center gap-4 text-primary group-hover:text-white transition-colors duration-500">
+                    <LogOut size={48} className="group-hover:scale-110 transition-transform duration-500" />
+                    <span className="font-black uppercase tracking-widest text-sm">Check-Out Scan</span>
+                  </div>
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -mr-16 -mt-16 group-hover:bg-white/10 transition-colors"></div>
                 </button>
               </div>
+            </div>
+          ) : isScanning ? (
+            <div className="p-10 space-y-10">
+              <div className="flex items-center justify-between">
+                <div className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 shadow-sm border ${
+                  scanMode === 'entry' ? 'bg-success/5 text-success border-success/10' : 'bg-primary/5 text-primary border-primary/10'
+                }`}>
+                  <div className={`h-2 w-2 rounded-full animate-pulse ${scanMode === 'entry' ? 'bg-success' : 'bg-primary'}`}></div>
+                  {scanMode === 'entry' ? 'Entry Protocol Active' : 'Exit Protocol Active'}
+                </div>
+                <button onClick={resetScanner} className="p-3 text-gray-400 hover:text-dark transition-colors">
+                  <XCircle size={24} />
+                </button>
+              </div>
+
               <div className="bg-gray-50 rounded-[2.5rem] overflow-hidden relative border-2 border-dashed border-gray-200">
                 <div id="reader"></div>
-                {!isScanning && (
-                   <div className="absolute inset-0 flex items-center justify-center bg-dark/20 backdrop-blur-sm">
-                      <div className="h-16 w-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                   </div>
-                )}
               </div>
+              
               <div className="flex items-center gap-4 text-secondary/60 justify-center">
                  <Camera size={18} />
                  <span className="text-xs font-black uppercase tracking-widest">
-                   {scanMode === 'entry' ? 'Entry mode active' : 'Exit mode active'} - position QR code within the frame
+                   Position QR code within the frame
                  </span>
               </div>
             </div>

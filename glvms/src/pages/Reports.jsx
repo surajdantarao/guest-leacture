@@ -5,24 +5,35 @@ import { Download, Calendar as CalendarIcon, FileText, Users, BookOpen, ChevronD
 import api from '../utils/api';
 
 const Reports = () => {
+  const [user] = useState(() => {
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+  const isSecurity = user?.role === 'security' || user?.role === 'visitor_security';
+
   const [visitors, setVisitors] = useState([]);
   const [lectures, setLectures] = useState([]);
   const [dateFilter, setDateFilter] = useState('');
   const [loading, setLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [reportType, setReportType] = useState('visitors'); // 'visitors' or 'lectures'
+  const [reportType, setReportType] = useState('visitors'); 
   const [expandedLectureId, setExpandedLectureId] = useState(null);
   const [expandedVisitorId, setExpandedVisitorId] = useState(null);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [visitorRes, lectureRes] = await Promise.all([
-        api.get('/visitors'),
-        api.get('/lectures?includeDeleted=true')
-      ]);
-      setVisitors(visitorRes.data);
-      setLectures(lectureRes.data);
+      if (isSecurity) {
+        const visitorRes = await api.get('/visitors');
+        setVisitors(visitorRes.data);
+      } else {
+        const [visitorRes, lectureRes] = await Promise.all([
+          api.get('/visitors'),
+          api.get('/lectures?includeDeleted=true')
+        ]);
+        setVisitors(visitorRes.data);
+        setLectures(lectureRes.data);
+      }
     } catch (err) {
       console.error('Error fetching reports:', err);
     } finally {
@@ -32,7 +43,8 @@ const Reports = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSecurity]);
 
   const getVisitorSortTime = (v) => {
     if (v.created_at || v.createdAt) {
@@ -93,6 +105,7 @@ const Reports = () => {
 
   const downloadExcelReport = () => {
     if (isExporting || loading) return;
+    if (isSecurity && reportType === 'lectures') return;
 
     setIsExporting(true);
     try {
@@ -203,6 +216,7 @@ const Reports = () => {
   };
 
   const toggleExpandLecture = (id) => {
+    if (isSecurity) return;
     setExpandedLectureId(expandedLectureId === id ? null : id);
   };
 
@@ -276,7 +290,7 @@ const Reports = () => {
                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Contact</p>
                    <div className="space-y-1">
                       <p className="text-xs font-bold text-dark truncate"><span className="text-gray-400 font-medium">Email:</span> {v.email || 'N/A'}</p>
-                      {v.idProof && (
+                      {v.idProof && !isSecurity && (
                         <a href={v.idProof.startsWith('http') ? v.idProof : `${api.defaults.baseURL.replace('/api', '')}${v.idProof}`} target="_blank" rel="noreferrer" className="text-[10px] font-black text-primary uppercase underline hover:text-dark">ID Proof</a>
                       )}
                    </div>
@@ -330,26 +344,28 @@ const Reports = () => {
           </div>
         </div>
 
-        <div className="flex bg-gray-100/50 p-1.5 rounded-2xl w-full max-w-md shadow-inner border border-gray-200/50">
-          <button
-            onClick={() => setReportType('visitors')}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all ${
-              reportType === 'visitors' ? 'bg-white text-primary shadow-sm' : 'text-secondary hover:text-dark'
-            }`}
-          >
-            <Users size={14} />
-            Visitor Logs
-          </button>
-          <button
-            onClick={() => setReportType('lectures')}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all ${
-              reportType === 'lectures' ? 'bg-white text-primary shadow-sm' : 'text-secondary hover:text-dark'
-            }`}
-          >
-            <BookOpen size={14} />
-            Lecture History
-          </button>
-        </div>
+        {!isSecurity && (
+          <div className="flex bg-gray-100/50 p-1.5 rounded-2xl w-full max-w-md shadow-inner border border-gray-200/50">
+            <button
+              onClick={() => setReportType('visitors')}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all ${
+                reportType === 'visitors' ? 'bg-white text-primary shadow-sm' : 'text-secondary hover:text-dark'
+              }`}
+            >
+              <Users size={14} />
+              Visitor Logs
+            </button>
+            <button
+              onClick={() => setReportType('lectures')}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all ${
+                reportType === 'lectures' ? 'bg-white text-primary shadow-sm' : 'text-secondary hover:text-dark'
+              }`}
+            >
+              <BookOpen size={14} />
+              Lecture History
+            </button>
+          </div>
+        )}
 
         <Card noPadding className="overflow-hidden border-none shadow-card bg-white rounded-[2rem]">
           <div className="overflow-x-auto">

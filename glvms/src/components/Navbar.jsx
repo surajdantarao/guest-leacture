@@ -39,7 +39,10 @@ const Navbar = ({ user, onLogout }) => {
   ];
 
   const visitorLinks = [{ name: 'My Visits', path: '/visitor-dashboard', icon: LayoutDashboard }];
-  const securityLinks = [{ name: 'Gate Entry', path: '/security-dashboard', icon: ShieldCheck }];
+  const securityLinks = [
+    { name: 'Gate Entry', path: '/security-dashboard', icon: ShieldCheck },
+    { name: 'Reports', path: '/admin-reports', icon: ClipboardList }
+  ];
 
   const getLinks = () => {
     if (!user) return publicLinks;

@@ -68,7 +68,7 @@ function App() {
               user?.role === 'admin' ? <AddLecture /> : <Navigate to="/login" />
             } />
             <Route path="/admin-reports" element={
-              user?.role === 'admin' ? <Reports /> : <Navigate to="/login" />
+              (user?.role === 'admin' || user?.role === 'security' || user?.role === 'visitor_security') ? <Reports /> : <Navigate to="/login" />
             } />
             <Route path="/admin/expenses" element={
               user?.role === 'admin' ? <Expenses /> : <Navigate to="/login" />
